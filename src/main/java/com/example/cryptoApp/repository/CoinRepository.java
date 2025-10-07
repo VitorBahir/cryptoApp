@@ -3,8 +3,8 @@ package com.example.cryptoApp.repository;
 import com.example.cryptoApp.dto.CoinTransactionDTO;
 import com.example.cryptoApp.entity.Coin;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
-import org.springframework.jdbc.core.JdbcTemplate;
+import jakarta.persistence.TypedQuery;
+import jakarta.transaction.Transactional;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
@@ -19,55 +19,32 @@ public class CoinRepository {
 
     public CoinRepository(EntityManager entityManager) { this.entityManager = entityManager; }
 
+    @Transactional
     public Coin insert (Coin coin) {
-        EntityTransaction transaction = entityManager.getTransaction();
-        transaction.begin();
         entityManager.persist(coin);
-        transaction.commit();
         return coin;
     }
 
+    @Transactional
     public Coin update(Coin coin) {
-        Object[] attr = new Object[] {
-            coin.getName(),
-            coin.getPrice(),
-            coin.getQuantity(),
-            coin.getId()
-        };
-        jdbcTemplate.update(UPDATE, attr);
+        entityManager.merge(coin);
         return coin;
     }
 
     public List<CoinTransactionDTO> getAll() {
-        return jdbcTemplate.query(SELECT_ALL, new RowMapper<CoinTransactionDTO>() {
-            @Override
-            public CoinTransactionDTO mapRow(ResultSet rs, int rowNum) throws SQLException {
-                CoinTransactionDTO coin = new CoinTransactionDTO();
-                coin.setName(rs.getString("name"));
-                coin.setQuantity(rs.getBigDecimal("quantity"));
-                return coin;
-            }
-        });
+        String jpql = "select new com.example.cryptoApp.dto.CoinTransactionDTO(c.name, sum(c.quantity)) from Coin c group by c.name";
+        TypedQuery<CoinTransactionDTO> query = entityManager.createQuery(jpql, CoinTransactionDTO.class);
+        return query.getResultList();
     }
 
     public List<Coin> getByName(String name) {
-        Object[] attr = new Object[] { name };
-
-        return jdbcTemplate.query(SELECT_BY_NAME, new RowMapper<Coin>() {
-            @Override
-            public Coin mapRow(ResultSet rs, int rowNum) throws SQLException {
-                Coin coin = new Coin();
-                coin.setId(rs.getInt("id"));
-                coin.setName(rs.getString("name"));
-                coin.setQuantity(rs.getBigDecimal("quantity"));
-                coin.setPrice(rs.getBigDecimal("price"));
-                coin.setDateTime(rs.getTimestamp("datetime"));
-                return coin;
-            }
-        }, attr);
+        String jpql = "select c from Coin c where c.name like :name";
+        TypedQuery<Coin> query = entityManager.createQuery(jpql, Coin.class);
+        query.setParameter("name", "%" + name + "%");
+        return query.getResultList();
     }
-
+/*
     public int remove(int id) {
         return jdbcTemplate.update(DELETE_BY_ID, id);
-    }
+    }*/
 }
