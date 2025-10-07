@@ -2,6 +2,7 @@ package com.example.cryptoApp.repository;
 
 import com.example.cryptoApp.dto.CoinTransactionDTO;
 import com.example.cryptoApp.entity.Coin;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import jakarta.transaction.Transactional;
@@ -43,8 +44,16 @@ public class CoinRepository {
         query.setParameter("name", "%" + name + "%");
         return query.getResultList();
     }
-/*
+
+    @Transactional
     public int remove(int id) {
-        return jdbcTemplate.update(DELETE_BY_ID, id);
-    }*/
+        Coin c = entityManager.find(Coin.class, id);
+
+        if (c == null) {
+            throw new RuntimeException();
+        }
+
+        entityManager.remove(c);
+        return 1;
+    }
 }

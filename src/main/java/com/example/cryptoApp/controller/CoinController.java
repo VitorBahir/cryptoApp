@@ -55,7 +55,7 @@ public class CoinController {
         try {
             return new ResponseEntity<>(coinRepository.remove(id), HttpStatus.OK);
         } catch (Exception e) {
-            throw new RuntimeException(e.getMessage());
+            return new ResponseEntity<>(false, HttpStatus.NO_CONTENT);
         }
     }
 
