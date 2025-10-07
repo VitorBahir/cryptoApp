@@ -2,6 +2,8 @@ package com.example.cryptoApp.repository;
 
 import com.example.cryptoApp.dto.CoinTransactionDTO;
 import com.example.cryptoApp.entity.Coin;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
@@ -13,28 +15,15 @@ import java.util.List;
 @Repository
 public class CoinRepository {
 
-    private static String INSERT  = "insert into coin (name, price, quantity, datetime) values (?,?,?,?)";
+    private EntityManager entityManager;
 
-    private static String SELECT_ALL = "select name, sum(quantity) as quantity from coin group by name";
-
-    private static String SELECT_BY_NAME = "select * from coin where name = ?";
-
-    private static String DELETE_BY_ID = "delete from coin where id = ?";
-
-    private static String UPDATE = "update coin set name = ?,  price = ?, quantity = ? where id = ?";
-
-    private JdbcTemplate jdbcTemplate;
-
-    public CoinRepository(JdbcTemplate jdbcTemplate) { this.jdbcTemplate = jdbcTemplate; }
+    public CoinRepository(EntityManager entityManager) { this.entityManager = entityManager; }
 
     public Coin insert (Coin coin) {
-        Object[] attr = new Object[] {
-            coin.getName(),
-            coin.getPrice(),
-            coin.getQuantity(),
-            coin.getDateTime()
-        };
-        jdbcTemplate.update(INSERT, attr);
+        EntityTransaction transaction = entityManager.getTransaction();
+        transaction.begin();
+        entityManager.persist(coin);
+        transaction.commit();
         return coin;
     }
 
